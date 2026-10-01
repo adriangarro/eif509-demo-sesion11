@@ -16,15 +16,18 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -47,6 +50,11 @@ class PedidoControllerTest {
 
     @MockBean PedidoService service;
 
+    // Sesión 11: la API exige un token. jwt() simula una petición
+    // autenticada con las autoridades indicadas, sin generar tokens reales.
+    static final org.springframework.test.web.servlet.request.RequestPostProcessor ADMIN =
+            jwt().jwt(j -> j.subject("admin@demo.cr")).authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
     static final PedidoResumen RESUMEN = new PedidoResumen(
             11L, "Ana Rojas", "Teclado mecánico", new BigDecimal("30000.00"), EstadoPedido.CREADO);
 
@@ -54,7 +62,7 @@ class PedidoControllerTest {
     void postValidoDevuelve201ConLocationYElDto() throws Exception {
         when(service.crear(any())).thenReturn(RESUMEN);
 
-        mvc.perform(post("/api/v1/pedidos")
+        mvc.perform(post("/api/v1/pedidos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clienteId": 1, "productoId": 1, "cantidad": 2}
@@ -69,7 +77,7 @@ class PedidoControllerTest {
     // Formato en la frontera: @Valid falla antes de llamar al servicio.
     @Test
     void formatoInvalidoDevuelve400SinTocarElServicio() throws Exception {
-        mvc.perform(post("/api/v1/pedidos")
+        mvc.perform(post("/api/v1/pedidos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"productoId": 1, "cantidad": -1}
@@ -90,7 +98,7 @@ class PedidoControllerTest {
         when(service.crear(any())).thenThrow(
                 new InventarioInsuficienteException("Silla ergonómica", 2, 5));
 
-        mvc.perform(post("/api/v1/pedidos")
+        mvc.perform(post("/api/v1/pedidos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clienteId": 1, "productoId": 3, "cantidad": 5}
@@ -107,9 +115,9 @@ class PedidoControllerTest {
 
     @Test
     void pedidoInexistenteDevuelve404() throws Exception {
-        when(service.obtener(999L)).thenThrow(new PedidoNoExisteException(999L));
+        when(service.obtener(eq(999L), any())).thenThrow(new PedidoNoExisteException(999L));
 
-        mvc.perform(get("/api/v1/pedidos/999"))
+        mvc.perform(get("/api/v1/pedidos/999").with(ADMIN))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Pedido no encontrado"));
@@ -119,17 +127,17 @@ class PedidoControllerTest {
     void confirmarDosVecesDevuelve409() throws Exception {
         when(service.confirmar(11L)).thenThrow(new PedidoYaConfirmadoException(11L));
 
-        mvc.perform(post("/api/v1/pedidos/11/confirmacion"))
+        mvc.perform(post("/api/v1/pedidos/11/confirmacion").with(ADMIN))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.title").value("Pedido ya confirmado"));
     }
 
     @Test
     void laColeccionRespondeUnaPaginaConMetadatos() throws Exception {
-        when(service.listar(isNull(), any(Pageable.class)))
+        when(service.listar(isNull(), any(Pageable.class), any()))
                 .thenReturn(new PageImpl<>(List.of(RESUMEN), PageRequest.of(0, 5), 1));
 
-        mvc.perform(get("/api/v1/pedidos").param("page", "0").param("size", "5"))
+        mvc.perform(get("/api/v1/pedidos").with(ADMIN).param("page", "0").param("size", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].cliente").value("Ana Rojas"))
                 .andExpect(jsonPath("$.page.size").value(5))

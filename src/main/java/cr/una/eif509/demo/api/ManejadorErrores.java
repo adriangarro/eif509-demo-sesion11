@@ -1,5 +1,7 @@
 package cr.una.eif509.demo.api;
 
+import cr.una.eif509.demo.excepcion.AccesoDenegadoException;
+import cr.una.eif509.demo.excepcion.CredencialesInvalidasException;
 import cr.una.eif509.demo.excepcion.InventarioInsuficienteException;
 import cr.una.eif509.demo.excepcion.MontoFacturaExcedidoException;
 import cr.una.eif509.demo.excepcion.PedidoNoExisteException;
@@ -75,6 +77,19 @@ public class ManejadorErrores {
     ProblemDetail productoDuplicado(ProductoDuplicadoException e) {
         return problema(HttpStatus.CONFLICT, "Producto duplicado",
                 "producto-duplicado", e);
+    }
+
+    // 401 Unauthorized: el correo o la clave no son correctos al iniciar sesión.
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    ProblemDetail credencialesInvalidas(CredencialesInvalidasException e) {
+        return problema(HttpStatus.UNAUTHORIZED, "Credenciales inválidas",
+                "credenciales-invalidas", e);
+    }
+
+    // 403 Forbidden: el recurso pertenece a otro usuario (propiedad del recurso).
+    @ExceptionHandler(AccesoDenegadoException.class)
+    ProblemDetail accesoDenegado(AccesoDenegadoException e) {
+        return problema(HttpStatus.FORBIDDEN, "Acceso denegado", "acceso-denegado", e);
     }
 
     // 404 Not Found: el recurso de la URL no existe.

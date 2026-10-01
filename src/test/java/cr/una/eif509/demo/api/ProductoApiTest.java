@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -22,6 +23,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -39,6 +41,9 @@ class ProductoApiTest {
 
     @MockBean ProductoService service;
 
+    static final org.springframework.test.web.servlet.request.RequestPostProcessor ADMIN =
+            jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
     static final ProductoResumen CAFE = new ProductoResumen(13L, "Café Tarrazú 1 kg", new BigDecimal("9800.00"), 25);
 
     @Test
@@ -46,7 +51,7 @@ class ProductoApiTest {
         when(service.listar(any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(CAFE), PageRequest.of(0, 20), 1));
 
-        mvc.perform(get("/api/v1/productos"))
+        mvc.perform(get("/api/v1/productos").with(ADMIN))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].nombre").value("Café Tarrazú 1 kg"))
@@ -57,7 +62,7 @@ class ProductoApiTest {
     void postValidoDevuelve201ConLocation() throws Exception {
         when(service.crear(any())).thenReturn(CAFE);
 
-        mvc.perform(post("/api/v1/productos")
+        mvc.perform(post("/api/v1/productos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre": "Café Tarrazú 1 kg", "precio": 9800.00, "disponible": 25}
@@ -68,10 +73,10 @@ class ProductoApiTest {
     }
 
     // Mismos @NotBlank y @Positive que el formulario; aquí, un 400.
-    // Y sin token CSRF: la cadena de /api/** no lo exige.
+    // Y sin token CSRF: la cadena de /api/** no lo exige (sí exige el JWT).
     @Test
     void formatoInvalidoDevuelve400ConLosMismosMensajesQueElFormulario() throws Exception {
-        mvc.perform(post("/api/v1/productos")
+        mvc.perform(post("/api/v1/productos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre": "", "precio": -5}
@@ -89,7 +94,7 @@ class ProductoApiTest {
     void nombreDuplicadoDevuelve409() throws Exception {
         when(service.crear(any())).thenThrow(new ProductoDuplicadoException("Teclado mecánico"));
 
-        mvc.perform(post("/api/v1/productos")
+        mvc.perform(post("/api/v1/productos").with(ADMIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nombre": "Teclado mecánico", "precio": 1, "disponible": 1}
@@ -102,7 +107,7 @@ class ProductoApiTest {
     void productoInexistenteDevuelve404() throws Exception {
         when(service.obtener(999L)).thenThrow(new ProductoNoExisteException(999L));
 
-        mvc.perform(get("/api/v1/productos/999"))
+        mvc.perform(get("/api/v1/productos/999").with(ADMIN))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Producto no encontrado"));
     }

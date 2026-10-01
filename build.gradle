@@ -40,6 +40,9 @@ dependencies {
     // de Thymeleaf permite mostrar el usuario autenticado en la plantilla.
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    // Sesión 11: el filtro que valida tokens JWT en cada petición de la API
+    // (incluye Nimbus, la biblioteca que firma y verifica los tokens).
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
     // Flyway como dependencia de la aplicación: Spring Boot aplica las
@@ -51,7 +54,7 @@ dependencies {
 
     // spring-boot-starter-test trae JUnit 5, Mockito, AssertJ y MockMvc.
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    // @WithMockUser y csrf() para probar las vistas protegidas.
+    // @WithMockUser, csrf() y jwt() para probar las vistas y la API protegidas.
     testImplementation 'org.springframework.security:spring-security-test'
     // Testcontainers: solo para las pruebas de integración (*IT).
     testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
@@ -60,6 +63,13 @@ dependencies {
 
 jacoco {
     toolVersion = '0.8.12'
+}
+
+// Las pruebas necesitan un secreto JWT (la aplicación lo lee de la variable
+// de entorno JWT_SECRETO). Este valor es solo para pruebas; en ejecución,
+// cada quien define el suyo.
+tasks.withType(Test).configureEach {
+    environment 'JWT_SECRETO', 'secreto-solo-para-pruebas-eif509-de-32-caracteres-o-mas'
 }
 
 // Imprime cada prueba con su duración: así se ve el contraste entre
