@@ -1,0 +1,46 @@
+### Peticiones de la Demostración 1 (Sesión 11): autenticación con JWT y roles.
+### La API debe estar en ejecución: ./gradlew bootRun
+###
+### Después de iniciar sesión, copien el valor de "token" de la respuesta y
+### péguenlo en la variable de abajo (reemplazando el texto de ejemplo).
+@token = pegue-aqui-el-token
+
+### 1. Sin token -> 401
+GET http://localhost:8080/api/v1/productos
+
+### 2. Iniciar sesión como ADMIN -> 200 con el token (péguenlo en jwt.io)
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@demo.cr", "clave": "admin123" }
+
+### 3. Con el token -> 200
+GET http://localhost:8080/api/v1/productos
+Authorization: Bearer {{token}}
+
+### 4. Crear un producto con el token -> 201 si es ADMIN, 403 si es CLIENTE
+POST http://localhost:8080/api/v1/productos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Café Tarrazú 1 kg", "precio": 9800.00, "disponible": 25 }
+
+### 5. Iniciar sesión como CLIENTE (copien este token y repitan la petición 4 -> 403)
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "correo": "cliente@demo.cr", "clave": "cliente123" }
+
+### 6. Propiedad del recurso: con el token del CLIENTE, el pedido 1 es suyo (200)...
+GET http://localhost:8080/api/v1/pedidos/1
+Authorization: Bearer {{token}}
+
+### 7. ...y el pedido 3 es de otro cliente (403)
+GET http://localhost:8080/api/v1/pedidos/3
+Authorization: Bearer {{token}}
+
+### 8. Clave incorrecta -> 401 con el mismo mensaje que un correo inexistente
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@demo.cr", "clave": "incorrecta" }

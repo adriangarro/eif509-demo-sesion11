@@ -18,8 +18,8 @@
   <!-- El POST /login lo atiende Spring Security. th:action agrega el campo
        _csrf; sin él, Spring Security también rechaza el inicio de sesión. -->
   <form class="formulario" th:action="@{/login}" method="post" action="#">
-    <label>Usuario
-      <input type="text" name="username" autocomplete="username" autofocus>
+    <label>Correo
+      <input type="email" name="username" autocomplete="username" autofocus>
     </label>
     <label>Contraseña
       <input type="password" name="password" autocomplete="current-password">
