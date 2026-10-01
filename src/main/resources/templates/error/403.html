@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Acceso denegado</title>
+  <link rel="stylesheet" href="../../static/css/admin.css" th:href="@{/css/admin.css}">
+</head>
+<body>
+<nav class="menu"><span class="marca">EIF509 · Administración</span>
+  <a th:href="@{/admin/productos}" href="#">Productos</a></nav>
+<main>
+  <h1>403 · Acceso denegado</h1>
+  <p>El servidor rechazó la solicitud. Si se envió un formulario, es probable
+     que no incluyera un token CSRF válido.</p>
+</main>
+</body>
+</html>

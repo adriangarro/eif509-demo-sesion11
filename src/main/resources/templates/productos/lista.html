@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!-- Plantilla natural: es HTML válido. Si la abren directamente en el
+     navegador (sin servidor), verán el prototipo con datos de ejemplo
+     («Café»). Al renderizarla, Thymeleaf reemplaza cada atributo th:* con
+     los datos del modelo. -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Productos · Administración</title>
+  <link rel="stylesheet" href="../../static/css/admin.css" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<nav class="menu" th:replace="~{fragmentos :: menu}">
+  <span class="marca">EIF509 · Administración</span>
+  <a href="lista.html">Productos</a>
+  <a href="form.html">Nuevo producto</a>
+</nav>
+
+<main>
+  <div class="acciones">
+    <h1>Productos</h1>
+    <a class="boton" th:href="@{/admin/productos/nuevo}" href="form.html">Nuevo producto</a>
+  </div>
+
+  <!-- Mensaje flash: se conserva durante exactamente una redirección (PRG). -->
+  <p class="ok" th:if="${ok}" th:text="${ok}">Producto creado</p>
+
+  <p th:unless="${pagina.empty}"
+     th:text="|Productos en el catálogo: ${pagina.totalElements}|">Productos en el catálogo: 12</p>
+
+  <table th:unless="${pagina.empty}">
+    <thead>
+    <tr>
+      <th>Nombre</th>
+      <th class="numero">Precio (₡)</th>
+      <th class="numero">Existencias</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- th:each recorre la lista; th:text escapa el contenido (defensa contra XSS). -->
+    <tr th:each="p : ${pagina.content}">
+      <td th:text="${p.nombre}">Café</td>
+      <td class="numero" th:text="${#numbers.formatDecimal(p.precio, 1, 2)}">1500.00</td>
+      <td class="numero" th:text="${p.disponible}">20</td>
+      <td><a th:href="@{/admin/productos/{id}(id=${p.id})}" href="form.html">Editar</a></td>
+    </tr>
+    <!-- Filas que solo aparecen en el prototipo: th:remove="all" las elimina al renderizar. -->
+    <tr th:remove="all">
+      <td>Té verde</td>
+      <td class="numero">1200.00</td>
+      <td class="numero">35</td>
+      <td><a href="form.html">Editar</a></td>
+    </tr>
+    <tr th:remove="all">
+      <td>Chocolate</td>
+      <td class="numero">2750.00</td>
+      <td class="numero">8</td>
+      <td><a href="form.html">Editar</a></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <p th:if="${pagina.empty}">No hay productos.</p>
+
+  <!-- Paginación: los enlaces incluyen los parámetros page y size, que el
+       controlador recibe en el Pageable. -->
+  <nav class="paginacion" th:if="${pagina.totalPages > 1}">
+    <a th:if="${pagina.hasPrevious()}"
+       th:href="@{/admin/productos(page=${pagina.number - 1}, size=${pagina.size})}" href="#">« Anterior</a>
+    <span th:text="|Página ${pagina.number + 1} de ${pagina.totalPages}|">Página 1 de 2</span>
+    <a th:if="${pagina.hasNext()}"
+       th:href="@{/admin/productos(page=${pagina.number + 1}, size=${pagina.size})}" href="#">Siguiente »</a>
+  </nav>
+</main>
+
+</body>
+</html>

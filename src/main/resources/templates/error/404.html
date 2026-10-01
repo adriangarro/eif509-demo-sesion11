@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>No encontrado</title>
+  <link rel="stylesheet" href="../../static/css/admin.css" th:href="@{/css/admin.css}">
+</head>
+<body>
+<nav class="menu"><span class="marca">EIF509 · Administración</span>
+  <a th:href="@{/admin/productos}" href="#">Productos</a></nav>
+<main>
+  <h1>404 · No encontrado</h1>
+  <p th:text="${mensaje} ?: 'La página solicitada no existe.'">La página solicitada no existe.</p>
+</main>
+</body>
+</html>

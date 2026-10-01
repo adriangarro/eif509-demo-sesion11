@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Fragmentos del módulo administrativo</title>
+  <link rel="stylesheet" href="../static/css/admin.css">
+</head>
+<body>
+<!-- Cada fragmento se escribe una sola vez y cada pantalla lo inserta con
+     th:replace="~{fragmentos :: menu}". Así se evita repetir el menú en
+     cada plantilla. -->
+
+<nav class="menu" th:fragment="menu">
+  <span class="marca">EIF509 · Administración</span>
+  <a th:href="@{/admin/productos}" href="productos/lista.html">Productos</a>
+  <a th:href="@{/admin/productos/nuevo}" href="productos/form.html">Nuevo producto</a>
+  <a th:href="@{/api/v1/productos}" href="#" target="_blank">API (JSON)</a>
+  <a th:href="@{/swagger-ui.html}" href="#" target="_blank">Swagger UI</a>
+
+  <!-- El usuario de la sesión (cookie JSESSIONID). Cerrar sesión es un
+       POST: con th:action, Thymeleaf incluye el token CSRF. -->
+  <span class="usuario" sec:authorize="isAuthenticated()">
+    <span sec:authentication="name">admin</span>
+    <form th:action="@{/logout}" method="post">
+      <button type="submit">Cerrar sesión</button>
+    </form>
+  </span>
+</nav>
+
+</body>
+</html>

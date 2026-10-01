@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!-- Página de error genérica de las vistas: muestra el código de estado, pero nunca la traza de la excepción. -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Error</title>
+  <link rel="stylesheet" href="../static/css/admin.css" th:href="@{/css/admin.css}">
+</head>
+<body>
+<nav class="menu"><span class="marca">EIF509 · Administración</span>
+  <a th:href="@{/admin/productos}" href="#">Productos</a></nav>
+<main>
+  <h1 th:text="|Error ${status}|">Error 500</h1>
+  <p>Ocurrió un problema al procesar la solicitud.</p>
+</main>
+</body>
+</html>

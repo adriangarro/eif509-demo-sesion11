@@ -1,0 +1,118 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'cr.una.eif509'
+version = '0.0.1-SNAPSHOT'
+
+// El BOM de Spring Boot 3.3.x fija Testcontainers 1.19.8, cuyo
+// docker-java no es compatible con Docker Engine 29+. Esta propiedad
+// actualiza todos los módulos de Testcontainers a la versión indicada.
+ext['testcontainers.version'] = '1.21.4'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Sesión 9: la capa de presentación. starter-web trae Spring MVC y
+    // Tomcat; starter-validation activa @Valid (Bean Validation) en la
+    // frontera; springdoc genera OpenAPI + Swagger UI desde el código.
+    // (springdoc 2.6.x es la línea compatible con Spring Boot 3.3.)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // Sesión 10: la presentación para personas. Thymeleaf renderiza el HTML
+    // en el servidor; Spring Security aporta la sesión con formulario de
+    // inicio de sesión y el token CSRF de cada formulario; el módulo extra
+    // de Thymeleaf permite mostrar el usuario autenticado en la plantilla.
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    // Flyway como dependencia de la aplicación: Spring Boot aplica las
+    // migraciones al arrancar, antes de que Hibernate valide las entidades.
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // spring-boot-starter-test trae JUnit 5, Mockito, AssertJ y MockMvc.
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // @WithMockUser y csrf() para probar las vistas protegidas.
+    testImplementation 'org.springframework.security:spring-security-test'
+    // Testcontainers: solo para las pruebas de integración (*IT).
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
+    testImplementation 'org.testcontainers:postgresql:1.21.4'
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+// Imprime cada prueba con su duración: así se ve el contraste entre
+// los milisegundos de una unitaria y los segundos de una de integración.
+def reporteConTiempos = { desc, result ->
+    def ms = result.endTime - result.startTime
+    println String.format('  %-28s %-45s %-7s %6d ms',
+            desc.className.tokenize('.').last(), desc.name, result.resultType, ms)
+}
+
+// Todas las pruebas: unitarias (*Test) y de integración (*IT, requieren Docker).
+tasks.named('test') {
+    useJUnitPlatform()
+    afterTest reporteConTiempos
+    finalizedBy jacocoTestReport
+}
+
+// Solo las unitarias: sin Spring, sin base de datos, sin Docker.
+tasks.register('unitTest', Test) {
+    description = 'Ejecuta solo las pruebas unitarias (*Test), sin Docker.'
+    group = 'verification'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/*Test.class'
+    afterTest reporteConTiempos
+}
+
+// Reporte de cobertura: build/reports/jacoco/test/html/index.html
+jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+
+// Requisito del Laboratorio 4: al menos 70 % de cobertura de líneas en la
+// capa de negocio.
+// Forma parte de `check` (y por lo tanto de `build` y del CI).
+jacocoTestCoverageVerification {
+    dependsOn test
+    violationRules {
+        rule {
+            element = 'PACKAGE'
+            includes = ['cr.una.eif509.demo.service']
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification

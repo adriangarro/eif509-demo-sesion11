@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- Plantilla natural del formulario (se usa para crear y para editar). -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${productoId == null} ? 'Nuevo producto' : 'Editar producto'">Nuevo producto</title>
+  <link rel="stylesheet" href="../../static/css/admin.css" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<nav class="menu" th:replace="~{fragmentos :: menu}">
+  <span class="marca">EIF509 · Administración</span>
+  <a href="lista.html">Productos</a>
+  <a href="form.html">Nuevo producto</a>
+</nav>
+
+<main>
+  <h1 th:text="${productoId == null} ? 'Nuevo producto' : 'Editar producto'">Nuevo producto</h1>
+
+  <!-- th:object enlaza el formulario al DTO «form» del modelo.
+       th:action construye la URL y agrega el campo oculto _csrf.
+       novalidate desactiva la validación del navegador para que se vean los
+       mensajes del servidor. La validación que protege los datos es la del
+       servidor, porque la del navegador se puede omitir. -->
+  <form class="formulario" method="post" novalidate
+        th:object="${form}"
+        th:action="${productoId == null} ? @{/admin/productos} : @{/admin/productos/{id}(id=${productoId})}"
+        action="lista.html">
+
+    <p class="resumen-errores" th:if="${#fields.hasAnyErrors()}">
+      Hay errores en los campos marcados.
+    </p>
+
+    <label>Nombre
+      <input type="text" th:field="*{nombre}" th:errorclass="campo-error" value="Café">
+      <span class="error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">Este campo es obligatorio.</span>
+    </label>
+
+    <label>Precio (₡)
+      <input type="number" step="0.01" th:field="*{precio}" th:errorclass="campo-error" value="1500.00">
+      <span class="error" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}">El valor debe ser mayor que cero.</span>
+    </label>
+
+    <label>Existencias
+      <input type="number" step="1" th:field="*{disponible}" th:errorclass="campo-error" value="20">
+      <span class="error" th:if="${#fields.hasErrors('disponible')}" th:errors="*{disponible}">El valor no puede ser negativo.</span>
+    </label>
+
+    <div>
+      <button class="boton" type="submit">Guardar</button>
+      <a class="boton secundario" th:href="@{/admin/productos}" href="lista.html">Cancelar</a>
+    </div>
+  </form>
+</main>
+
+</body>
+</html>

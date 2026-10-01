@@ -1,0 +1,11 @@
+.gradle/
+build/
+out/
+bin/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Cookies de las pruebas con curl (paso opcional de CSRF)
+cookies.txt

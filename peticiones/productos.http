@@ -1,0 +1,27 @@
+### Peticiones de la API del catálogo (Sesión 10).
+### La API debe estar en ejecución: ./gradlew bootRun
+### Las vistas MVC (/admin/productos) se usan desde el navegador.
+
+### 1. Colección paginada (la misma que muestra /admin/productos en HTML)
+GET http://localhost:8080/api/v1/productos?page=0&size=5
+
+### 2. POST válido -> 201 + Location (mismo DTO que el formulario HTML)
+POST http://localhost:8080/api/v1/productos
+Content-Type: application/json
+
+{ "nombre": "Café Tarrazú 1 kg", "precio": 9800.00, "disponible": 25 }
+
+### 3. Mismas reglas de formato que el formulario -> 400 Problem Details
+POST http://localhost:8080/api/v1/productos
+Content-Type: application/json
+
+{ "nombre": "", "precio": -5 }
+
+### 4. Nombre repetido -> 409 (en el formulario: mensaje junto al campo)
+POST http://localhost:8080/api/v1/productos
+Content-Type: application/json
+
+{ "nombre": "Teclado mecánico", "precio": 1, "disponible": 1 }
+
+### 5. Producto inexistente -> 404
+GET http://localhost:8080/api/v1/productos/999
