@@ -226,8 +226,9 @@ o.f.core.internal.command.DbMigrate      : Successfully applied 7 migrations to 
 cr.una.eif509.demo.DemoApplication       : Started DemoApplication in 1.57 seconds
 ```
 
-(Si antes hicieron el paso 5, verán `Successfully applied 1 migration`:
-Flyway aplica solo la V7.)
+Si antes hicieron el paso 5, verán `Successfully applied 1 migration`:
+Flyway aplica solo la V7. Si la API ya arrancó antes con esta base, verán
+`Schema "public" is up to date`: no hay migraciones pendientes.
 
 Si falta la variable, la aplicación no arranca y el mensaje lo indica:
 `Could not resolve placeholder 'JWT_SECRETO'`. Si es demasiado corta:
@@ -541,7 +542,12 @@ Detengan la API y arránquenla sin el perfil:
 ./gradlew bootRun
 ```
 
-Recarguen la SPA: ahora funciona. La configuración está en
+Recarguen la SPA: ahora funciona. Arranquen siempre la API en la misma
+terminal donde definieron `JWT_SECRETO`: si el secreto cambia, la API
+rechaza los tokens emitidos con el anterior (401) y la SPA vuelve al
+inicio de sesión, que es el comportamiento esperado.
+
+La configuración está en
 `SeguridadConfig.corsConfigurationSource()`:
 
 ```java
