@@ -7,7 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  # La API: compila y ejecuta todas las pruebas (incluidas las de seguridad
+  # y las de integración con Testcontainers) y la regla de cobertura.
+  api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,3 +20,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build
         run: ./gradlew build
+
+  # La SPA: instala dependencias, revisa el código (oxlint) y compila.
+  spa:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: spa/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
