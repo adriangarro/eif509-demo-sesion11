@@ -3,6 +3,7 @@ package cr.una.eif509.demo.service;
 import cr.una.eif509.demo.dto.CrearPedidoRequest;
 import cr.una.eif509.demo.dto.PedidoMapper;
 import cr.una.eif509.demo.dto.PedidoResumen;
+import cr.una.eif509.demo.excepcion.AccesoDenegadoException;
 import cr.una.eif509.demo.excepcion.PedidoNoExisteException;
 import cr.una.eif509.demo.excepcion.PedidoYaConfirmadoException;
 import cr.una.eif509.demo.excepcion.ReferenciaInvalidaException;
@@ -11,6 +12,7 @@ import cr.una.eif509.demo.model.Pedido;
 import cr.una.eif509.demo.repository.ClienteRepository;
 import cr.una.eif509.demo.repository.InventarioRepository;
 import cr.una.eif509.demo.repository.PedidoRepository;
+import cr.una.eif509.demo.seguridad.UsuarioActual;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -66,20 +68,36 @@ public class PedidoService {
         return PedidoMapper.aResumen(pedido);
     }
 
+    // Sesión 11 · Autorización por propiedad del recurso (OWASP API1).
+    // Un token válido no autoriza a ver cualquier pedido: el servicio
+    // compara el usuario del token con el dueño del pedido. Esta regla
+    // depende de los datos, por eso no se puede declarar en la
+    // configuración de seguridad y vive aquí. El rol ADMIN ve todos.
     @Transactional(readOnly = true)
-    public PedidoResumen obtener(Long pedidoId) {
-        return pedidos.findById(pedidoId)
-                .map(PedidoMapper::aResumen)
+    public PedidoResumen obtener(Long pedidoId, UsuarioActual usuario) {
+        var pedido = pedidos.findById(pedidoId)
                 .orElseThrow(() -> new PedidoNoExisteException(pedidoId));
+        if (!usuario.esAdmin() && !pedido.getCliente().getEmail().equals(usuario.correo())) {
+            throw new AccesoDenegadoException();   // -> 403
+        }
+        return PedidoMapper.aResumen(pedido);
     }
 
     // La colección siempre se entrega paginada. El filtro por estado es
     // explícito; page, size y sort vienen en el Pageable desde la URL.
+    // Un CLIENTE solo recibe sus propios pedidos; ADMIN recibe todos.
     @Transactional(readOnly = true)
-    public Page<PedidoResumen> listar(EstadoPedido estado, Pageable pageable) {
-        var pagina = estado == null
-                ? pedidos.findAll(pageable)
-                : pedidos.findByEstado(estado, pageable);
+    public Page<PedidoResumen> listar(EstadoPedido estado, Pageable pageable, UsuarioActual usuario) {
+        Page<Pedido> pagina;
+        if (usuario.esAdmin()) {
+            pagina = estado == null
+                    ? pedidos.findAll(pageable)
+                    : pedidos.findByEstado(estado, pageable);
+        } else {
+            pagina = estado == null
+                    ? pedidos.findByClienteEmail(usuario.correo(), pageable)
+                    : pedidos.findByClienteEmailAndEstado(usuario.correo(), estado, pageable);
+        }
         return pagina.map(PedidoMapper::aResumen);
     }
 

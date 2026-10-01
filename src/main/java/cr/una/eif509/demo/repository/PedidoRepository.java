@@ -28,4 +28,12 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Filtro explícito por estado: método derivado del nombre.
     @EntityGraph(attributePaths = {"cliente", "producto"})
     Page<Pedido> findByEstado(EstadoPedido estado, Pageable pageable);
+
+    // Sesión 11: los pedidos de un cliente (por su correo), con y sin
+    // filtro por estado. Spring Data navega cliente.email.
+    @EntityGraph(attributePaths = {"cliente", "producto"})
+    Page<Pedido> findByClienteEmail(String email, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cliente", "producto"})
+    Page<Pedido> findByClienteEmailAndEstado(String email, EstadoPedido estado, Pageable pageable);
 }

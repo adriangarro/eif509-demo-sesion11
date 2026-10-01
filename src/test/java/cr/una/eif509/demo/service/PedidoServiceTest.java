@@ -12,6 +12,8 @@ import cr.una.eif509.demo.model.Pedido;
 import cr.una.eif509.demo.repository.ClienteRepository;
 import cr.una.eif509.demo.repository.InventarioRepository;
 import cr.una.eif509.demo.repository.PedidoRepository;
+import cr.una.eif509.demo.seguridad.UsuarioActual;
+import cr.una.eif509.demo.excepcion.AccesoDenegadoException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -136,6 +138,33 @@ class PedidoServiceTest {
                 .isInstanceOf(ReferenciaInvalidaException.class);
 
         verify(pedidos, never()).save(any());
+    }
+
+    // Sesión 11 · Propiedad del recurso: el pedido es de ana@mail.com.
+    @Test
+    void unClienteConsultaSuPropioPedido() {
+        when(pedidos.findById(1L)).thenReturn(Optional.of(pedidoCon(1, 10)));
+
+        var resumen = service.obtener(1L, new UsuarioActual("ana@mail.com", false));
+
+        assertThat(resumen.cliente()).isEqualTo("Ana Rojas");
+    }
+
+    @Test
+    void unClienteNoPuedeConsultarElPedidoDeOtro() {
+        when(pedidos.findById(1L)).thenReturn(Optional.of(pedidoCon(1, 10)));
+
+        assertThatThrownBy(() -> service.obtener(1L, new UsuarioActual("luis@mail.com", false)))
+                .isInstanceOf(AccesoDenegadoException.class);
+    }
+
+    @Test
+    void elAdministradorConsultaCualquierPedido() {
+        when(pedidos.findById(1L)).thenReturn(Optional.of(pedidoCon(1, 10)));
+
+        var resumen = service.obtener(1L, new UsuarioActual("admin@demo.cr", true));
+
+        assertThat(resumen.cliente()).isEqualTo("Ana Rojas");
     }
 
     // Método auxiliar: construye un pedido de prueba con su producto en
