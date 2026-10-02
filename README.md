@@ -125,6 +125,42 @@ En macOS con Homebrew, ejecuten en ambas terminales:
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ```
 
+### Ejemplo: comandos en la computadora del profesor (macOS)
+
+Con el repositorio en `~/Documents/Claude/eif509-demo-sesion11`, los
+comandos que cambian respecto al guion quedan así, listos para copiar. Los
+demás pasos son idénticos.
+
+Paso 1, en la terminal 1:
+
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home && cd ~/Documents/Claude/eif509-demo-sesion11 && docker compose down -v && docker compose up -d && git switch inicio && ./gradlew bootRun
+```
+
+Paso 1, en la terminal 2:
+
+```bash
+cd ~/Documents/Claude/eif509-demo-sesion11 && curl -i http://localhost:8080/api/v1/productos
+```
+
+Paso 2, en la terminal 1 (después de `Ctrl+C`):
+
+```bash
+git switch main && export JWT_SECRETO=$(openssl rand -base64 48) && ./gradlew bootRun
+```
+
+Paso 9, en la terminal 2:
+
+```bash
+cd ~/Documents/Claude/eif509-demo-sesion11/spa && npm install && npm run dev
+```
+
+Al terminar:
+
+```bash
+cd ~/Documents/Claude/eif509-demo-sesion11 && docker compose down -v
+```
+
 ### Demostración 1 · JWT y roles
 
 **1. La API sin seguridad (paso 5).** En la terminal 1:
