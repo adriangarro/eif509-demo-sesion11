@@ -99,7 +99,7 @@ con BCrypt (nunca en texto plano):
 Sesión 10 (`/admin/productos`): ambas presentaciones usan la misma tabla de
 usuarios.
 
-## Guion rápido para la clase
+## Las demostraciones paso a paso
 
 Esta sección resume las dos demostraciones en el orden del guion, con un
 comando por paso. Las explicaciones de cada paso («Qué observar») están en
@@ -128,7 +128,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ### Ejemplo: comandos en la computadora del profesor (macOS)
 
 Con el repositorio en `~/Documents/Claude/eif509-demo-sesion11`, los
-comandos que cambian respecto al guion quedan así, listos para copiar. Los
+comandos que cambian respecto a esta sección quedan así, listos para copiar. Los
 demás pasos son idénticos.
 
 Paso 1, en la terminal 1:
