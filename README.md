@@ -99,6 +99,161 @@ con BCrypt (nunca en texto plano):
 Sesión 10 (`/admin/productos`): ambas presentaciones usan la misma tabla de
 usuarios.
 
+## Guion rápido para la clase
+
+Esta sección resume las dos demostraciones en el orden del guion, con un
+comando por paso. Las explicaciones de cada paso («Qué observar») están en
+las secciones detalladas más abajo; el número entre paréntesis indica el
+paso correspondiente.
+
+### Antes de empezar
+
+Abran Docker Desktop y esperen a que termine de iniciar. Abran dos
+terminales en la carpeta del repositorio clonado:
+
+```bash
+git clone https://github.com/adriangarro/eif509-demo-sesion11.git
+```
+
+```bash
+cd eif509-demo-sesion11
+```
+
+En macOS con Homebrew, ejecuten en ambas terminales:
+
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+```
+
+### Demostración 1 · JWT y roles
+
+**1. La API sin seguridad (paso 5).** En la terminal 1:
+
+```bash
+docker compose down -v && docker compose up -d && git switch inicio && ./gradlew bootRun
+```
+
+En la terminal 2:
+
+```bash
+curl -i http://localhost:8080/api/v1/productos
+```
+
+Responde 200 sin credenciales.
+
+**2. Activar la seguridad (pasos 6 y 7).** En la terminal 1, presionen
+`Ctrl+C` y ejecuten:
+
+```bash
+git switch main && export JWT_SECRETO=$(openssl rand -base64 48) && ./gradlew bootRun
+```
+
+**3. Sin token, 401 (paso 8).** En la terminal 2:
+
+```bash
+curl -i http://localhost:8080/api/v1/productos
+```
+
+**4. Iniciar sesión (paso 9).** Copien el token de la respuesta y péguenlo
+en jwt.io:
+
+```bash
+curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"correo": "admin@demo.cr", "clave": "admin123"}'
+```
+
+Guarden el token en una variable para los pasos siguientes:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"correo": "admin@demo.cr", "clave": "admin123"}' | sed 's/.*"token":"\([^"]*\)".*/\1/')
+```
+
+**5. Con token, 200 (paso 10):**
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/productos
+```
+
+**6. Rol CLIENTE, 403 (paso 11):**
+
+```bash
+TOKEN_CLIENTE=$(curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"correo": "cliente@demo.cr", "clave": "cliente123"}' | sed 's/.*"token":"\([^"]*\)".*/\1/')
+```
+
+```bash
+curl -i -X POST http://localhost:8080/api/v1/productos -H "Authorization: Bearer $TOKEN_CLIENTE" -H 'Content-Type: application/json' -d '{"nombre": "Producto del cliente", "precio": 1, "disponible": 1}'
+```
+
+**7. Propiedad del recurso (paso 12).** El pedido 1 es de la clienta y
+responde 200:
+
+```bash
+curl -s -o /dev/null -w "pedido 1 -> %{http_code}\n" -H "Authorization: Bearer $TOKEN_CLIENTE" http://localhost:8080/api/v1/pedidos/1
+```
+
+El pedido 3 es de otro cliente y responde 403:
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN_CLIENTE" http://localhost:8080/api/v1/pedidos/3
+```
+
+**8. Las pruebas de seguridad (paso 13).** No necesitan Docker ni detener
+la API:
+
+```bash
+./gradlew unitTest
+```
+
+### Demostración 2 · SPA en React
+
+**9. Arrancar la SPA (paso 15).** En la terminal 2:
+
+```bash
+cd spa && npm install && npm run dev
+```
+
+**10. Usar la SPA (pasos 16 y 17).** Abran `http://localhost:5173` en el
+navegador. Entren como `cliente@demo.cr` / `cliente123`, recorran las
+páginas e intenten crear un producto: aparece el 403. Después cierren
+sesión, entren como `admin@demo.cr` / `admin123` y creen un producto.
+
+**11. El error de CORS (paso 18).** En la terminal 1, presionen `Ctrl+C` y
+ejecuten:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=sin-cors'
+```
+
+Recarguen la SPA y revisen el error en la consola del navegador (`F12`,
+pestaña *Console*).
+
+**12. Corregir CORS.** En la terminal 1, presionen `Ctrl+C` y ejecuten:
+
+```bash
+./gradlew bootRun
+```
+
+Recarguen la SPA: vuelve a funcionar.
+
+**13. La API detenida (paso 19).** En la terminal 1, presionen `Ctrl+C` y
+recarguen la SPA: aparece el mensaje de error.
+
+### Al terminar
+
+Detengan la SPA con `Ctrl+C` en la terminal 2 y, desde la carpeta del
+repositorio, apaguen la base de datos:
+
+```bash
+docker compose down -v
+```
+
+Dos aspectos que deben tener presentes:
+
+- **Arranquen siempre la API en la terminal 1**, donde definieron
+  `JWT_SECRETO`. Si el secreto cambia, la API rechaza los tokens anteriores
+  y la SPA vuelve al inicio de sesión.
+- **Si algo falla**, la rama `main` contiene la versión completa y las
+  secciones siguientes explican cada paso en detalle.
+
 ## Estructura del proyecto
 
 Lo nuevo respecto a la Sesión 10 está marcado con `←`:
