@@ -190,17 +190,62 @@ git switch main && export JWT_SECRETO=$(openssl rand -base64 48) && ./gradlew bo
 curl -i http://localhost:8080/api/v1/productos
 ```
 
-**4. Iniciar sesión (paso 9).** Copien el token de la respuesta y péguenlo
-en jwt.io:
+**4. Iniciar sesión y ver el token en jwt.io (paso 9).**
 
 ```bash
 curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"correo": "admin@demo.cr", "clave": "admin123"}'
 ```
 
+La respuesta trae el token, un texto largo de tres partes separadas por
+puntos (`eyJhbGciOiJIUzI1NiJ9.eyJpc3Mi...`). Para verlo en jwt.io:
+
+1. Copien el valor de `token`, sin las comillas.
+2. Abran [https://jwt.io](https://jwt.io). En la pestaña **JWT Decoder**,
+   pulsen **Clear** en el recuadro **Encoded Token** (trae un token de
+   ejemplo) y peguen el suyo.
+3. Debajo del token aparecen **Valid JWT** e **Invalid Signature**. El
+   token está bien formado; la firma aparece como inválida porque jwt.io
+   la compara con su propio secreto de ejemplo.
+4. A la derecha, **Decoded Header** muestra `{"alg": "HS256"}`, el
+   algoritmo de la firma, y **Decoded Payload** muestra el contenido:
+
+   ```json
+   {
+     "iss": "eif509",
+     "sub": "admin@demo.cr",
+     "exp": 1790907558,
+     "iat": 1790903958,
+     "roles": ["ADMIN"]
+   }
+   ```
+
+   `sub` es quién es el usuario, `roles` lo que puede hacer, `iat` cuándo
+   se emitió y `exp` hasta cuándo vale (una hora después). Los números son
+   segundos desde 1970 y cambian en cada inicio de sesión.
+
+Cualquiera puede leer el contenido de un token; lo que no puede hacer es
+modificarlo sin invalidar la firma. Por eso un token nunca lleva datos
+sensibles.
+
+*(Opcional)* Para mostrar que la firma depende del secreto, péguenlo en
+el campo **Secret** de la sección **JWT Signature Verification**, con la
+opción **BASE64URL ENCODED** desactivada: el mensaje cambia a **Signature
+Verified**. Como la terminal 1 queda ocupada por la API, el secreto se
+copia en el paso 2: después del `export` y antes de `./gradlew bootRun`,
+ejecuten `echo "$JWT_SECRETO"`. Esto se hace solo con el secreto
+de una demostración: un secreto real nunca se pega en un sitio externo.
+
 Guarden el token en una variable para los pasos siguientes:
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"correo": "admin@demo.cr", "clave": "admin123"}' | sed 's/.*"token":"\([^"]*\)".*/\1/')
+```
+
+Si no hay acceso a internet, el contenido también se puede leer en la
+terminal:
+
+```bash
+echo "$TOKEN" | python3 -c "import sys,base64,json; p=sys.stdin.read().split('.')[1]; print(json.dumps(json.loads(base64.urlsafe_b64decode(p+'='*(-len(p)%4))), indent=2))"
 ```
 
 **5. Con token, 200 (paso 10):**
