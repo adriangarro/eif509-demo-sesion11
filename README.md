@@ -99,6 +99,38 @@ con BCrypt (nunca en texto plano):
 Sesión 10 (`/admin/productos`): ambas presentaciones usan la misma tabla de
 usuarios.
 
+## Estructura del proyecto
+
+Lo nuevo respecto a la Sesión 10 está marcado con `←`:
+
+```text
+├── build.gradle                                   ← spring-boot-starter-oauth2-resource-server
+├── peticiones/seguridad.http                      ← peticiones de la Demostración 1
+├── spa/                                           ← la SPA en React (Vite)
+│   └── src/
+│       ├── api.js                                 ← un solo lugar para hablar con la API
+│       ├── sesion.js                              ← dónde se guarda el token
+│       ├── Login.jsx                              ← inicio de sesión
+│       ├── ProductoLista.jsx                      ← listado paginado: cargando, datos y error
+│       ├── ProductoNuevo.jsx                      ← crear producto (muestra el 403 del CLIENTE)
+│       └── App.jsx                                ← sin token: inicio de sesión; con token: catálogo
+└── src/
+    ├── main/resources/
+    │   ├── application.properties                 ← jwt.secreto=${JWT_SECRETO}, cors.origenes
+    │   ├── application-sin-cors.properties        ← perfil para mostrar el error de CORS
+    │   └── db/migration/V7__usuarios.sql          ← usuarios con rol y clave BCrypt
+    ├── main/java/cr/una/eif509/demo/
+    │   ├── config/SeguridadConfig.java            ← paso 1: clave, filtro JWT, roles y CORS
+    │   ├── config/RespuestasDeSeguridad.java      ← 401 y 403 en formato Problem Details
+    │   ├── seguridad/TokenService.java            ← paso 2: emisión del token
+    │   ├── api/AuthController.java                ← POST /auth/login
+    │   ├── service/PedidoService.java             ← paso 3: verificación de propiedad
+    │   └── seguridad/UsuarioActual.java           ← el usuario del token, para el servicio
+    └── test/java/cr/una/eif509/demo/
+        ├── api/SeguridadApiTest.java              ← paso 4: pruebas de 401, 403 y 200 (sin base)
+        └── seguridad/AutenticacionIT.java         ← tokens reales contra PostgreSQL, y CORS
+```
+
 ## Las demostraciones paso a paso
 
 Esta sección resume las dos demostraciones en el orden del guion, con un
@@ -334,38 +366,6 @@ Dos aspectos que deben tener presentes:
   y la SPA vuelve al inicio de sesión.
 - **Si algo falla**, la rama `main` contiene la versión completa y las
   secciones siguientes explican cada paso en detalle.
-
-## Estructura del proyecto
-
-Lo nuevo respecto a la Sesión 10 está marcado con `←`:
-
-```text
-├── build.gradle                                   ← spring-boot-starter-oauth2-resource-server
-├── peticiones/seguridad.http                      ← peticiones de la Demostración 1
-├── spa/                                           ← la SPA en React (Vite)
-│   └── src/
-│       ├── api.js                                 ← un solo lugar para hablar con la API
-│       ├── sesion.js                              ← dónde se guarda el token
-│       ├── Login.jsx                              ← inicio de sesión
-│       ├── ProductoLista.jsx                      ← listado paginado: cargando, datos y error
-│       ├── ProductoNuevo.jsx                      ← crear producto (muestra el 403 del CLIENTE)
-│       └── App.jsx                                ← sin token: inicio de sesión; con token: catálogo
-└── src/
-    ├── main/resources/
-    │   ├── application.properties                 ← jwt.secreto=${JWT_SECRETO}, cors.origenes
-    │   ├── application-sin-cors.properties        ← perfil para mostrar el error de CORS
-    │   └── db/migration/V7__usuarios.sql          ← usuarios con rol y clave BCrypt
-    ├── main/java/cr/una/eif509/demo/
-    │   ├── config/SeguridadConfig.java            ← paso 1: clave, filtro JWT, roles y CORS
-    │   ├── config/RespuestasDeSeguridad.java      ← 401 y 403 en formato Problem Details
-    │   ├── seguridad/TokenService.java            ← paso 2: emisión del token
-    │   ├── api/AuthController.java                ← POST /auth/login
-    │   ├── service/PedidoService.java             ← paso 3: verificación de propiedad
-    │   └── seguridad/UsuarioActual.java           ← el usuario del token, para el servicio
-    └── test/java/cr/una/eif509/demo/
-        ├── api/SeguridadApiTest.java              ← paso 4: pruebas de 401, 403 y 200 (sin base)
-        └── seguridad/AutenticacionIT.java         ← tokens reales contra PostgreSQL, y CORS
-```
 
 ## Instalación y configuración
 
