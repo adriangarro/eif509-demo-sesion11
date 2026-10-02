@@ -133,10 +133,9 @@ Lo nuevo respecto a la Sesión 10 está marcado con `←`:
 
 ## Las demostraciones paso a paso
 
-Esta sección resume las dos demostraciones en el orden del guion, con un
-comando por paso. Las explicaciones de cada paso («Qué observar») están en
-las secciones detalladas más abajo; el número entre paréntesis indica el
-paso correspondiente.
+Sigan estos pasos en orden para ejecutar las dos demostraciones; cada uno
+tiene el comando listo para copiar. La explicación de cada paso está en las
+secciones detalladas más abajo: el número entre paréntesis indica dónde.
 
 ### Antes de empezar
 
